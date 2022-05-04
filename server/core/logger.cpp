@@ -43,7 +43,7 @@ class logger_impl : public logger
             logger_impl& log,
             beast::string_view name)
             : log_(log)
-            , name_(name.to_string())
+            , name_(name)
         {
         }
 

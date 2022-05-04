@@ -337,7 +337,7 @@ checked_value(
     auto it = obj.find(key);
     if(it == obj.end())
         throw rpc_error{
-            "key '" + key.to_string() + "' not found"};
+            "key '" + std::string(key) + "' not found"};
     return it->value();
 }
 
