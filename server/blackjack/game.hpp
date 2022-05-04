@@ -12,6 +12,7 @@
 
 #include "core/config.hpp"
 #include <boost/beast/core/static_string.hpp>
+#include <boost/beast/core/string.hpp>
 #include <vector>
 
 namespace blackjack {
@@ -157,8 +158,8 @@ public:
     game(
         config const& cfg,
         Callback cb)
-        : cfg_(cfg)
-        , cb_(cb)
+        : cb_(cb)
+        , cfg_(cfg)
         , sh_(cfg_.decks)
     {
     }
