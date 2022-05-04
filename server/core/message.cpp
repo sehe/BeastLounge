@@ -17,13 +17,14 @@ message
 make_message(json::value const& jv)
 {
     char buf[16384];
-    json::serializer sr(jv);
-    auto const n = sr.read(buf, sizeof(buf));
-    if(! sr.is_done())
+    json::serializer sr;
+    sr.reset(&jv);
+    auto const r = sr.read(buf, sizeof(buf));
+    if(! sr.done())
     {
         // buffer overflow!
         return {};
     }
-    return message(net::const_buffer(buf, n));
+    return message(net::const_buffer(r.data(), r.size()));
 }
 

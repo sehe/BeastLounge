@@ -103,8 +103,7 @@ public:
     {
         // Validate and extract the channel id
         auto const cid =
-            json::number_cast<std::size_t>(
-                checked_value(rpc.params, "cid"));
+                checked_value(rpc.params, "cid").as_uint64(); // TODO check conversion
 
         // Lookup cid
         auto c = at(cid);

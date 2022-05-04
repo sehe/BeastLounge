@@ -47,17 +47,14 @@ make_system_channel(server&);
 namespace boost {
 namespace json {
 
-template<>
-struct value_cast_traits<net::ip::address>
-{
     static
     net::ip::address
-    construct(
-        json::value const& jv)
+    tag_invoke(
+            value_to_tag<net::ip::address>,
+            json::value const& jv)
     {
         return net::ip::make_address(jv.as_string().c_str());
     }
-};
 
 } // json
 } // boost
@@ -65,8 +62,8 @@ struct value_cast_traits<net::ip::address>
 listener_config::
 listener_config(json::value&& jv)
     : name(std::move(jv.at("name").as_string()))
-    , address(json::value_cast<net::ip::address>(jv.at("address")))
-    , port_num(json::number_cast<unsigned short>(jv.at("port_num")))
+    , address(json::value_to<net::ip::address>(jv.at("address")))
+    , port_num(static_cast<unsigned short>(jv.at("port_num").as_int64()))
 {
 }
 
@@ -83,7 +80,7 @@ struct server_config
 
     explicit
     server_config(json::value&& jv)
-        : num_threads(json::number_cast<unsigned>(jv.at("threads")))
+        : num_threads(static_cast<unsigned>(jv.at("threads").as_int64()))
         , doc_root(jv.at("doc-root").as_string())
     {
         if( num_threads < 1)
@@ -482,7 +479,7 @@ make_server(
             ! jv.get_object().contains("server") ||
             ! jv.get_object()["server"].is_object())
         {
-            ec = json::error::not_object;
+            ec = json::error::value_is_scalar; // TODO REVIEW
             log->cerr() <<
                 "server_config: " << ec.message() << "\n";
             return nullptr;
@@ -515,7 +512,7 @@ make_server(
             ! jv.get_object().contains("listeners") ||
             ! jv.get_object()["listeners"].is_array())
         {
-            ec = json::error::not_array;
+            ec = json::error::value_is_scalar; // TODO REVIEW
             return nullptr;
         }
         for(auto& e :
