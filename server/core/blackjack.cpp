@@ -206,12 +206,9 @@ struct hand
         return busted || twenty_one;
     }
 
-    void
-    to_json(json::value& jv) const
+    friend void tag_invoke(json::value_from_tag, json::value& jv, hand const& h)
     {
-        auto& arr = jv.emplace_array();
-        arr.insert(arr.end(),
-            cards.begin(), cards.end());
+        jv = json::array(h.cards.begin(), h.cards.end());
     }
 };
 
@@ -250,12 +247,10 @@ struct seat
         chips = 1000;
     }
 
-    void
-    to_json(json::value& jv) const
-    {
+    friend void tag_invoke(json::value_from_tag, json::value& jv, seat const& s) {
         auto& obj = jv.emplace_object();
-        obj.emplace("hands", json::to_value(hands));
-        switch(state)
+        obj.emplace("hands", json::value_from(s.hands));
+        switch(s.state)
         {
         case dealer:
             obj.emplace("state", "dealer");
@@ -263,22 +258,22 @@ struct seat
 
         case waiting:
             obj.emplace("state", "waiting");
-            obj.emplace("user", u->name);
-            obj.emplace("chips", chips);
+            obj.emplace("user", s.u->name);
+            obj.emplace("chips", s.chips);
             break;
 
         case playing:
             obj.emplace("state", "playing");
-            obj.emplace("user", u->name);
-            obj.emplace("chips", chips);
-            obj.emplace("wager", wager);
+            obj.emplace("user", s.u->name);
+            obj.emplace("chips", s.chips);
+            obj.emplace("wager", s.wager);
             break;
 
         case leaving:
             obj.emplace("state", "leaving");
-            obj.emplace("user", u->name);
-            obj.emplace("chips", chips);
-            obj.emplace("wager", wager);
+            obj.emplace("user", s.u->name);
+            obj.emplace("chips", s.chips);
+            obj.emplace("wager", s.wager);
             break;
 
         case open:
@@ -437,31 +432,23 @@ public:
         ec = {};
     }
 
-    void
-    to_json(json::value& jv) const
+    friend void tag_invoke(json::value_from_tag, json::value& jv, game const& g)
     {
-        switch(s_)
+        switch(g.s_)
         {
         case state::wait:
             jv = {
-                { "message", "Waiting for players" }
+                { "message", "Waiting for players" },
+                { "seats", json::value_from(g.seat_) }
             };
             break;
 
         case state::play:
             jv = {
-                { "message", "Playing" }
+                { "message", "Playing" },
+                { "seats", json::value_from(g.seat_) }
             };
             break;
-        }
-        auto& obj = jv.as_object();
-        {
-            auto& arr = obj.emplace(
-                "seats", json::array{})
-                    .first->value().emplace_array();
-            for(std::size_t i = 0;
-                i < seat_.size(); ++i)
-                arr.emplace_back(json::to_value(seat_[i]));
         }
     }
 
@@ -616,7 +603,7 @@ private:
         obj["cid"] = cid();
         obj["verb"] = "update";
         obj["action"] = action;
-        obj["game"] = json::to_value(g_);
+        obj["game"] = json::value_from(g_);
         send(jv);
     }
 
@@ -655,7 +642,7 @@ private:
         obj["cid"] = cid();
         obj["verb"] = "update";
         obj["action"] = "init";
-        obj["game"] = json::to_value(g_);
+        obj["game"] = json::value_from(g_);
         sp->send(jv);
     }
 
